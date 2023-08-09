@@ -19,6 +19,9 @@ import { ChangeEvent, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { isBase64Image } from "@/lib/utils";
 import { useUploadThing } from "@/lib/uploadthing";
+import { UpdateUser } from "@/lib/actions/user.actions";
+
+import { useRouter, usePathname } from "next/navigation";
 
 interface PropsType {
   user: {
@@ -36,6 +39,9 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
   const [files, setFiles] = useState<File[]>([]);
 
   const { startUpload } = useUploadThing("media");
+
+  const pathname = usePathname();
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(userValidation),
@@ -73,14 +79,30 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
     const hasImageChanged = isBase64Image(blob);
     if (hasImageChanged) {
       const imgRes = await startUpload(files);
-      if (imgRes && imgRes[0].fileUrl) {
+      if (imgRes?.length && imgRes[0].fileUrl) {
         values.profile_photo = imgRes[0].fileUrl;
       }
     }
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     // TODO: update user profile
-    console.log(values);
+
+    await UpdateUser({
+      userId: user.id ? user.id : "",
+      username: values.username,
+      name: values.name,
+      image: values.profile_photo,
+      bio: values.bio,
+      path: pathname,
+    });
+
+    // // console.log(values, user.id);
+
+    if (pathname === "/profile/edit") {
+      router.back();
+    } else {
+      router.push("/");
+    }
   }
   return (
     <Form {...form}>
@@ -122,6 +144,7 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
                     onChange={(e) => handleImage(e, field.onChange)}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             );
           }}
@@ -142,6 +165,7 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -161,6 +185,7 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -181,6 +206,7 @@ const AccountProfile = ({ user, btnTitle }: PropsType) => {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
